@@ -6,7 +6,6 @@
     <title>FileZila - The Ultimate File Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* A few custom styles for elements not easily handled by Tailwind alone */
         .drop-zone {
             border: 2px dashed #3b82f6;
             transition: background-color 0.2s ease-in-out;
@@ -59,28 +58,20 @@
                         <span class="drop-zone__prompt">
                             <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
                             <span class="mt-2 block font-semibold text-gray-900 dark:text-gray-100">Drag & drop or tap to upload</span>
-                            <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400">Supports Images, Documents, Presentations, and more</span>
+                            <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400">Supports JPG, PNG, PDF, and more</span>
                         </span>
                     </div>
-                    <p id="file-name" class="mt-4 text-gray-600 dark:text-gray-300"></p>
-
-                    <!-- Conversion Options -->
-                    <div id="conversion-options" class="mt-6 space-y-4 hidden">
-                        <div>
-                            <label for="output-format" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Convert to:</label>
-                            <select id="output-format" name="output-format" class="mt-1 block w-full max-w-xs mx-auto pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                                <option>JPG</option>
-                                <option>PNG</option>
-                                <option>SVG</option>
-                                <option>PDF</option>
-                                <option>DOCX (Word)</option>
-                                <option>PPTX (PowerPoint)</option>
-                                <option>XLSX (Excel)</option>
-                            </select>
-                        </div>
-                        <button id="convert-button" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                            Convert File
-                        </button>
+                     <div id="file-details-section" class="hidden mt-6 text-left max-w-md mx-auto">
+                        <p id="file-name" class="text-gray-600 dark:text-gray-300"></p>
+                        <label for="format-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">Convert to:</label>
+                        <select id="format-select" name="format" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option>pptx</option>
+                            <option>excel</option>
+                            <option>jpg</option>
+                            <option>svg</option>
+                            <option>pdf</option>
+                        </select>
+                        <button id="start-conversion-button" class="mt-6 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Start Conversion</button>
                     </div>
                     <p id="error-message" class="mt-4 text-red-500"></p>
                 </section>
@@ -109,6 +100,14 @@
     </div>
 
     <script>
+        // --- CONFIGURATION ---
+        // IMPORTANT: Paste your Cloud Function Trigger URL here!
+        const GET_UPLOAD_URL_API_ENDPOINT = 'https://get-upload-url-439192440179.europe-west1.run.app';
+        // Note: The download URL will be handled differently in a full backend implementation.
+        // For now, we are simulating this part.
+        const CONVERTED_BUCKET_PUBLIC_URL = 'https://storage.googleapis.com/YOUR_CONVERTED_BUCKET_NAME';
+
+
         // --- DOM Elements ---
         const dropZone = document.getElementById('drop-zone');
         const fileUpload = document.getElementById('file-upload');
@@ -123,9 +122,8 @@
         const progressSubtitle = document.getElementById('progress-subtitle');
         const downloadLink = document.getElementById('download-link');
         const convertAnotherButton = document.getElementById('convert-another-button');
-        const conversionOptions = document.getElementById('conversion-options');
-        const outputFormatSelect = document.getElementById('output-format');
-        const convertButton = document.getElementById('convert-button');
+        const fileDetailsSection = document.getElementById('file-details-section');
+        const startConversionButton = document.getElementById('start-conversion-button');
 
         let selectedFile = null;
 
@@ -142,12 +140,12 @@
             dropZone.classList.remove('drop-zone--over');
         });
         fileUpload.addEventListener('change', e => { if (e.target.files.length) handleFileSelect(e.target.files[0]); });
-        convertAnotherButton.addEventListener('click', resetUI);
-        convertButton.addEventListener('click', () => {
-            if(selectedFile) {
-                simulateUpload(selectedFile);
-            }
+        startConversionButton.addEventListener('click', () => {
+             if (selectedFile) {
+                uploadFile(selectedFile);
+             }
         });
+        convertAnotherButton.addEventListener('click', resetUI);
 
         // --- Core Logic ---
         function handleFileSelect(file) {
@@ -155,32 +153,58 @@
             selectedFile = file;
             fileNameDisplay.textContent = `Selected file: ${file.name}`;
             errorMessage.textContent = '';
-            conversionOptions.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+            fileDetailsSection.classList.remove('hidden');
         }
 
-        // This function SIMULATES the upload and conversion process.
-        function simulateUpload(file) {
-            uploaderSection.classList.add('hidden');
-            progressSection.classList.remove('hidden');
+        async function uploadFile(file) {
+            if (GET_UPLOAD_URL_API_ENDPOINT.includes('PASTE_YOUR')) {
+                showError('Error: Backend API endpoint is not configured.');
+                return;
+            }
+            
+            try {
+                // 1. Get a secure signed/presigned URL from our backend
+                updateProgressUI(0, 'Preparing upload...');
+                fileDetailsSection.classList.add('hidden');
+                progressSection.classList.remove('hidden');
 
-            let progress = 0;
-            updateProgressUI(progress, 'Preparing upload...');
+                const response = await fetch(GET_UPLOAD_URL_API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+                });
 
-            // Simulate the upload progress
-            const interval = setInterval(() => {
-                progress += 10;
-                if (progress <= 50) {
-                     updateProgressUI(progress, 'Uploading...');
-                } else if (progress <= 90) {
-                     updateProgressUI(progress, 'Processing file...');
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Could not get an upload URL from the API. Server says: ${errorText}`);
                 }
+                const { url } = await response.json();
+
+                // 2. Upload the file directly to Cloud Storage using the secure URL
+                updateProgressUI(25, 'Uploading...');
+                const uploadResponse = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type },
+                    body: file,
+                });
+
+                if (!uploadResponse.ok) throw new Error('Direct file upload failed.');
                 
-                if (progress >= 100) {
-                    clearInterval(interval);
+                // 3. The conversion function would be triggered automatically on the backend.
+                // We will simulate this process.
+                updateProgressUI(75, 'Processing file...');
+                
+                setTimeout(() => {
                     updateProgressUI(100, 'Complete!');
-                    setTimeout(showSuccess, 500); // Wait half a second before showing success
-                }
-            }, 200);
+                    showSuccess();
+                }, 3000); // Simulate processing time
+
+            } catch (error) {
+                console.error('Upload process failed:', error);
+                showError(`Upload failed: ${error.message}`);
+                resetUI();
+            }
         }
         
         function updateProgressUI(percentage, text) {
@@ -190,18 +214,17 @@
         }
 
         function showSuccess() {
-            // Logic to construct a fake download URL for the simulation
+            // In a real application, the backend would provide the download link.
+            // We are simulating this by creating a placeholder file.
+            const blob = new Blob(["This is a simulated converted file."], { type: "text/plain" });
+            const downloadUrl = URL.createObjectURL(blob);
+            
             const originalName = selectedFile.name;
             const baseName = originalName.substring(0, originalName.lastIndexOf('.'));
-            const selectedFormat = outputFormatSelect.value.split(' ')[0].toLowerCase(); // Get format like 'pptx' from 'PPTX (PowerPoint)'
+            const selectedFormat = document.getElementById('format-select').value;
             const convertedFileName = `${baseName}-converted.${selectedFormat}`;
             
-            // Create a dummy file for download to make the button work
-            const dummyContent = `This is a simulated file converted to ${selectedFormat.toUpperCase()}.`;
-            const blob = new Blob([dummyContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-
-            downloadLink.href = url;
+            downloadLink.href = downloadUrl;
             downloadLink.download = convertedFileName;
 
             progressSection.classList.add('hidden');
@@ -210,15 +233,15 @@
 
         function showError(message) {
             errorMessage.textContent = message;
-            uploaderSection.classList.remove('hidden');
+            dropZone.classList.remove('hidden');
+            fileDetailsSection.classList.add('hidden');
             progressSection.classList.add('hidden');
             successSection.classList.add('hidden');
         }
 
         function resetUI() {
             successSection.classList.add('hidden');
-            uploaderSection.classList.remove('hidden');
-            conversionOptions.classList.add('hidden');
+            dropZone.classList.remove('hidden');
             selectedFile = null;
             fileUpload.value = '';
             fileNameDisplay.textContent = '';
