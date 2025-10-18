@@ -59,10 +59,29 @@
                         <span class="drop-zone__prompt">
                             <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
                             <span class="mt-2 block font-semibold text-gray-900 dark:text-gray-100">Drag & drop or tap to upload</span>
-                            <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400">Supports JPG, PNG, PDF, and more</span>
+                            <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400">Supports Images, Documents, Presentations, and more</span>
                         </span>
                     </div>
                     <p id="file-name" class="mt-4 text-gray-600 dark:text-gray-300"></p>
+
+                    <!-- Conversion Options -->
+                    <div id="conversion-options" class="mt-6 space-y-4 hidden">
+                        <div>
+                            <label for="output-format" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Convert to:</label>
+                            <select id="output-format" name="output-format" class="mt-1 block w-full max-w-xs mx-auto pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                                <option>JPG</option>
+                                <option>PNG</option>
+                                <option>SVG</option>
+                                <option>PDF</option>
+                                <option>DOCX (Word)</option>
+                                <option>PPTX (PowerPoint)</option>
+                                <option>XLSX (Excel)</option>
+                            </select>
+                        </div>
+                        <button id="convert-button" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            Convert File
+                        </button>
+                    </div>
                     <p id="error-message" class="mt-4 text-red-500"></p>
                 </section>
 
@@ -104,6 +123,9 @@
         const progressSubtitle = document.getElementById('progress-subtitle');
         const downloadLink = document.getElementById('download-link');
         const convertAnotherButton = document.getElementById('convert-another-button');
+        const conversionOptions = document.getElementById('conversion-options');
+        const outputFormatSelect = document.getElementById('output-format');
+        const convertButton = document.getElementById('convert-button');
 
         let selectedFile = null;
 
@@ -121,6 +143,11 @@
         });
         fileUpload.addEventListener('change', e => { if (e.target.files.length) handleFileSelect(e.target.files[0]); });
         convertAnotherButton.addEventListener('click', resetUI);
+        convertButton.addEventListener('click', () => {
+            if(selectedFile) {
+                simulateUpload(selectedFile);
+            }
+        });
 
         // --- Core Logic ---
         function handleFileSelect(file) {
@@ -128,7 +155,7 @@
             selectedFile = file;
             fileNameDisplay.textContent = `Selected file: ${file.name}`;
             errorMessage.textContent = '';
-            simulateUpload(file);
+            conversionOptions.classList.remove('hidden');
         }
 
         // This function SIMULATES the upload and conversion process.
@@ -166,11 +193,11 @@
             // Logic to construct a fake download URL for the simulation
             const originalName = selectedFile.name;
             const baseName = originalName.substring(0, originalName.lastIndexOf('.'));
-            const extension = originalName.substring(originalName.lastIndexOf('.')) || '.txt';
-            const convertedFileName = `${baseName}-converted${extension}`;
+            const selectedFormat = outputFormatSelect.value.split(' ')[0].toLowerCase(); // Get format like 'pptx' from 'PPTX (PowerPoint)'
+            const convertedFileName = `${baseName}-converted.${selectedFormat}`;
             
             // Create a dummy file for download to make the button work
-            const dummyContent = 'This is a simulated converted file.';
+            const dummyContent = `This is a simulated file converted to ${selectedFormat.toUpperCase()}.`;
             const blob = new Blob([dummyContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
 
@@ -191,6 +218,7 @@
         function resetUI() {
             successSection.classList.add('hidden');
             uploaderSection.classList.remove('hidden');
+            conversionOptions.classList.add('hidden');
             selectedFile = null;
             fileUpload.value = '';
             fileNameDisplay.textContent = '';
@@ -200,6 +228,3 @@
     </script>
 </body>
 </html>
-
-
-
