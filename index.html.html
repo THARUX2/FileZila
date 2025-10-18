@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FileZila - The Ultimate File Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* A few custom styles for elements not easily handled by Tailwind alone */
+        .drop-zone {
+            border: 2px dashed #3b82f6;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .drop-zone--over {
+            background-color: #3b82f620;
+        }
+        .drop-zone__input {
+            display: none;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 1rem;
+            background-color: #3b82f6;
+            width: 0%;
+            transition: width 0.3s ease-in-out;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased">
+
+    <div id="converter-page" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
+                        <span class="ml-2 text-xl font-bold text-gray-900 dark:text-white">FileZila</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="py-8 sm:py-10">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Uploader Section -->
+                <section id="uploader-section" class="text-center">
+                    <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">Convert Your Files</h1>
+                    <p class="mt-4 max-w-md mx-auto text-lg text-gray-500 dark:text-gray-400">Fast, secure, and easy-to-use on any device.</p>
+                    <div id="drop-zone" class="mt-8 drop-zone bg-white dark:bg-gray-800/50 rounded-lg cursor-pointer p-8 sm:p-12 md:p-16">
+                        <input type="file" id="file-upload" class="drop-zone__input">
+                        <span class="drop-zone__prompt">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                            <span class="mt-2 block font-semibold text-gray-900 dark:text-gray-100">Drag & drop or tap to upload</span>
+                            <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400">Supports JPG, PNG, PDF, and more</span>
+                        </span>
+                    </div>
+                    <p id="file-name" class="mt-4 text-gray-600 dark:text-gray-300"></p>
+                    <p id="error-message" class="mt-4 text-red-500"></p>
+                </section>
+
+                <!-- Progress Section -->
+                <section id="progress-section" class="hidden text-center">
+                    <h2 id="progress-title" class="text-3xl font-bold text-gray-900 dark:text-white">Uploading...</h2>
+                    <p id="progress-subtitle" class="mt-2 text-gray-500 dark:text-gray-400">Your file is being securely uploaded.</p>
+                    <div class="mt-8">
+                        <div class="progress-bar-container"><div id="progress-bar" class="progress-bar"></div></div>
+                        <p id="progress-text" class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">0%</p>
+                    </div>
+                </section>
+
+                <!-- Success Section -->
+                <section id="success-section" class="hidden text-center">
+                     <h2 class="text-3xl font-bold text-green-500">Conversion Successful!</h2>
+                     <p class="mt-2 text-gray-500 dark:text-gray-400">Your file has been converted and is ready for download.</p>
+                     <div class="mt-8 flex flex-col sm:flex-row sm:justify-center items-center gap-4">
+                         <a id="download-link" href="#" download="converted-file" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Download File</a>
+                         <button id="convert-another-button" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">Convert Another File</button>
+                     </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        // IMPORTANT: Paste your Cloud Function Trigger URLs or API Gateway endpoint here!
+        const GET_UPLOAD_URL_API_ENDPOINT = 'PASTE_YOUR_API_ENDPOINT_URL_HERE';
+        const CONVERTED_BUCKET_PUBLIC_URL = 'PASTE_YOUR_CONVERTED_BUCKET_PUBLIC_URL_HERE';
+
+        // --- DOM Elements ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileUpload = document.getElementById('file-upload');
+        const fileNameDisplay = document.getElementById('file-name');
+        const errorMessage = document.getElementById('error-message');
+        const uploaderSection = document.getElementById('uploader-section');
+        const progressSection = document.getElementById('progress-section');
+        const successSection = document.getElementById('success-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const progressTitle = document.getElementById('progress-title');
+        const progressSubtitle = document.getElementById('progress-subtitle');
+        const downloadLink = document.getElementById('download-link');
+        const convertAnotherButton = document.getElementById('convert-another-button');
+
+        let selectedFile = null;
+
+        // --- Event Listeners ---
+        dropZone.addEventListener('click', () => fileUpload.click());
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drop-zone--over'); });
+        ['dragleave', 'dragend'].forEach(type => { dropZone.addEventListener(type, () => dropZone.classList.remove('drop-zone--over')); });
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length) {
+                fileUpload.files = e.dataTransfer.files;
+                handleFileSelect(fileUpload.files[0]);
+            }
+            dropZone.classList.remove('drop-zone--over');
+        });
+        fileUpload.addEventListener('change', e => { if (e.target.files.length) handleFileSelect(e.target.files[0]); });
+        convertAnotherButton.addEventListener('click', resetUI);
+
+        // --- Core Logic ---
+        function handleFileSelect(file) {
+            if (!file) return;
+            selectedFile = file;
+            fileNameDisplay.textContent = `Selected file: ${file.name}`;
+            errorMessage.textContent = '';
+            uploadFile(file);
+        }
+
+        async function uploadFile(file) {
+            if (GET_UPLOAD_URL_API_ENDPOINT.includes('PASTE_YOUR')) {
+                showError('Error: Backend API endpoint is not configured.');
+                return;
+            }
+            
+            try {
+                // 1. Get a secure signed/presigned URL from our API Gateway
+                updateProgressUI(0, 'Preparing upload...');
+                uploaderSection.classList.add('hidden');
+                progressSection.classList.remove('hidden');
+
+                const response = await fetch(GET_UPLOAD_URL_API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+                });
+
+                if (!response.ok) throw new Error('Could not get an upload URL from the API.');
+                const { url } = await response.json();
+
+                // 2. Upload the file directly to Cloud Storage/S3 using the secure URL
+                updateProgressUI(25, 'Uploading...');
+                const uploadResponse = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type },
+                    body: file,
+                });
+
+                if (!uploadResponse.ok) throw new Error('Direct file upload failed.');
+                updateProgressUI(75, 'Processing file...');
+
+                // 3. The conversion function is triggered automatically. Show success.
+                // In a real app, you might use WebSockets or polling to get the true status.
+                setTimeout(() => {
+                    updateProgressUI(100, 'Complete!');
+                    showSuccess();
+                }, 3000); // Simulate processing time
+
+            } catch (error) {
+                console.error('Upload process failed:', error);
+                showError(`Upload failed: ${error.message}`);
+                resetUI();
+            }
+        }
+        
+        function updateProgressUI(percentage, text) {
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${percentage}%`;
+            progressSubtitle.textContent = text;
+        }
+
+        function showSuccess() {
+            // Logic to construct the final download URL
+            const originalName = selectedFile.name;
+            const baseName = originalName.substring(0, originalName.lastIndexOf('.'));
+            const extension = originalName.substring(originalName.lastIndexOf('.'));
+            const convertedFileName = `${baseName}-converted${extension}`;
+            
+            downloadLink.href = `${CONVERTED_BUCKET_PUBLIC_URL}/${convertedFileName}`;
+            downloadLink.download = convertedFileName;
+
+            progressSection.classList.add('hidden');
+            successSection.classList.remove('hidden');
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            uploaderSection.classList.remove('hidden');
+            progressSection.classList.add('hidden');
+            successSection.classList.add('hidden');
+        }
+
+        function resetUI() {
+            successSection.classList.add('hidden');
+            uploaderSection.classList.remove('hidden');
+            selectedFile = null;
+            fileUpload.value = '';
+            fileNameDisplay.textContent = '';
+            errorMessage.textContent = '';
+            updateProgressUI(0, '');
+        }
+    </script>
+</body>
+</html>
+
