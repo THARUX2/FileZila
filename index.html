@@ -213,16 +213,47 @@
             progressSubtitle.textContent = text;
         }
 
+        // --- UPDATED SIMULATION FOR DOWNLOAD ---
         function showSuccess() {
-            // In a real application, the backend would provide the download link.
-            // We are simulating this by creating a placeholder file.
-            const blob = new Blob(["This is a simulated converted file."], { type: "text/plain" });
-            const downloadUrl = URL.createObjectURL(blob);
-            
             const originalName = selectedFile.name;
             const baseName = originalName.substring(0, originalName.lastIndexOf('.'));
             const selectedFormat = document.getElementById('format-select').value;
             const convertedFileName = `${baseName}-converted.${selectedFormat}`;
+            
+            let mimeType;
+            let fileContent;
+
+            // Give the placeholder blob a recognizable content and correct MIME type
+            switch (selectedFormat.toLowerCase()) {
+                case 'pdf':
+                    mimeType = 'application/pdf';
+                    fileContent = `FileZila Conversion Simulation: This file's content is NOT a real PDF.`;
+                    break;
+                case 'jpg':
+                case 'png':
+                    mimeType = `image/${selectedFormat.toLowerCase()}`;
+                    fileContent = `FileZila Conversion Simulation: This file's content is NOT a real image.`;
+                    break;
+                case 'pptx':
+                    mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+                    fileContent = `FileZila Conversion Simulation: This file's content is NOT a real PowerPoint.`;
+                    break;
+                case 'excel':
+                    mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                    fileContent = `FileZila Conversion Simulation: This file's content is NOT a real Excel spreadsheet.`;
+                    break;
+                case 'svg':
+                    mimeType = 'image/svg+xml';
+                    fileContent = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"><rect width="200" height="100" fill="#3b82f6"/><text x="10" y="50" fill="white" font-size="20">SIMULATED SVG</text></svg>`;
+                    break;
+                default:
+                    mimeType = 'text/plain';
+                    fileContent = `FileZila Conversion Simulation: File content placeholder.`;
+            }
+            
+            // For text/XML formats, we use a string. For real binary formats, this would fail, but for simulation it allows download.
+            const blob = new Blob([fileContent], { type: mimeType });
+            const downloadUrl = URL.createObjectURL(blob);
             
             downloadLink.href = downloadUrl;
             downloadLink.download = convertedFileName;
