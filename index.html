@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
@@ -101,13 +101,10 @@
 
     <script>
         // --- CONFIGURATION ---
-        // CRITICAL FIX: Changed URL to point to the correct 'get-upload-url' service,
-        // which has the correct entry point and permissions.
+        // 1. ENDPOINT FOR GETTING THE SIGNED UPLOAD URL (Step 1)
         const GET_UPLOAD_URL_API_ENDPOINT = 'https://get-upload-url-439192440179.europe-west1.run.app';
-        // Note: The download URL will be handled differently in a full backend implementation.
-        // For now, we are simulating this part.
-        const CONVERTED_BUCKET_PUBLIC_URL = 'https://storage.googleapis.com/YOUR_CONVERTED_BUCKET_NAME';
-
+        // 2. ENDPOINT FOR CHECKING THE CONVERSION STATUS (Step 3 Polling)
+        const CHECK_STATUS_API_ENDPOINT = 'https://filezila-check-status-439192440179.europe-west1.run.app';
 
         // --- DOM Elements ---
         const dropZone = document.getElementById('drop-zone');
@@ -127,6 +124,7 @@
         const startConversionButton = document.getElementById('start-conversion-button');
 
         let selectedFile = null;
+        const POLLING_INTERVAL = 2000; // Check status every 2 seconds
 
         // --- Event Listeners ---
         dropZone.addEventListener('click', () => fileUpload.click());
@@ -177,60 +175,30 @@
                 });
 
                 if (!response.ok) {
-                    // --- ENHANCED ERROR REPORTING ---
                     const errorText = await response.text();
-                    const status = response.status;
-                    const statusText = response.statusText;
-                    console.error('SERVER RESPONSE FAILED:', status, statusText, errorText);
-                    
-                    // Show specific error messages to the user
-                    let errorDetail = `Status ${status} (${statusText}).`;
-                    if (status === 404) {
-                        errorDetail = 'API Not Found. Check service name in URL.';
-                    } else if (status === 405) {
-                        errorDetail = 'Method Not Allowed (Only POST is accepted).';
-                    } else if (errorText.includes('Not Found')) {
-                        errorDetail = 'Error: The server URL is incorrect.';
-                    } else if (errorText.length > 0) {
-                        errorDetail = `Server responded: ${errorText.substring(0, 80)}...`;
-                    }
-                    
+                    console.error('SERVER RESPONSE FAILED:', response.status, response.statusText, errorText);
+                    let errorDetail = `Status ${response.status} (${response.statusText}).`;
                     throw new Error(`Could not get upload URL. ${errorDetail}`);
                 }
                 const { url } = await response.json();
 
                 // 2. Upload the file directly to Cloud Storage using the secure URL
-                updateProgressUI(25, 'Uploading...');
+                updateProgressUI(25, 'Uploading file...');
                 const uploadResponse = await fetch(url, {
                     method: 'PUT',
-                    // CRITICAL: The signed URL requires the Content-Type header to exactly match
                     headers: { 'Content-Type': file.type },
                     body: file,
                 });
 
                 if (!uploadResponse.ok) {
-                    // --- ENHANCED GCS ERROR REPORTING ---
                     const errorText = await uploadResponse.text();
-                    const status = uploadResponse.status;
-                    console.error('GCS PUT UPLOAD FAILED:', status, errorText);
-                    
-                    let errorDetail = `Upload failed with Status ${status}.`;
-                    if (status === 403) {
-                         errorDetail = "403 Forbidden. Check GCS CORS (cors.json) and Service Account permissions.";
-                    } else if (errorText.includes('SignatureDoesNotMatch')) {
-                        errorDetail = "Signature Mismatch. Check Content-Type header and IAM permissions (Token Creator).";
-                    }
-                    throw new Error(`Direct file upload failed. ${errorDetail}`);
+                    console.error('GCS PUT UPLOAD FAILED:', uploadResponse.status, errorText);
+                    throw new Error(`Direct file upload failed (Status ${uploadResponse.status}). Check permissions/CORS.`);
                 }
                 
-                // 3. The conversion function would be triggered automatically on the backend.
-                // We will simulate this process.
-                updateProgressUI(75, 'Processing file...');
-                
-                setTimeout(() => {
-                    updateProgressUI(100, 'Complete!');
-                    showSuccess();
-                }, 3000); // Simulate processing time
+                // 3. Start Polling for Conversion Status
+                updateProgressUI(50, 'File uploaded. Starting conversion process...');
+                startPolling(file.name);
 
             } catch (error) {
                 console.error('Upload process failed:', error);
@@ -239,56 +207,59 @@
             }
         }
         
+        // --- NEW POLLING LOGIC ---
+        function startPolling(originalName) {
+            const selectedFormat = document.getElementById('format-select').value;
+            const poll = setInterval(async () => {
+                
+                updateProgressUI(75, 'Waiting for conversion to complete...');
+
+                try {
+                    const response = await fetch(CHECK_STATUS_API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ originalName, targetFormat: selectedFormat }),
+                    });
+                    
+                    if (!response.ok) {
+                        clearInterval(poll);
+                        throw new Error(`Status check failed: ${response.status} ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.status === 'complete') {
+                        clearInterval(poll);
+                        updateProgressUI(100, 'Complete!');
+                        showSuccess(result.downloadUrl, result.convertedFileName);
+                    } else if (result.status === 'processing') {
+                         updateProgressUI(75, 'Conversion in progress...');
+                    } else if (result.status === 'error') {
+                        clearInterval(poll);
+                        throw new Error(`Conversion error: ${result.message}`);
+                    }
+                } catch (error) {
+                    clearInterval(poll);
+                    console.error('Polling failed:', error);
+                    showError(`Conversion failed: ${error.message}`);
+                    resetUI();
+                }
+            }, POLLING_INTERVAL);
+        }
+
+
         function updateProgressUI(percentage, text) {
             progressBar.style.width = `${percentage}%`;
             progressText.textContent = `${percentage}%`;
             progressSubtitle.textContent = text;
         }
 
-        // --- UPDATED SIMULATION FOR DOWNLOAD ---
-        function showSuccess() {
-            const originalName = selectedFile.name;
-            const baseName = originalName.substring(0, originalName.lastIndexOf('.'));
-            const selectedFormat = document.getElementById('format-select').value;
-            const convertedFileName = `${baseName}-converted.${selectedFormat}`;
+        // --- FINALIZED SHOW SUCCESS (Uses real URL) ---
+        function showSuccess(downloadUrl, convertedFileName) {
             
-            let mimeType;
-            let fileContent;
-
-            // Give the placeholder blob a recognizable content and correct MIME type
-            switch (selectedFormat.toLowerCase()) {
-                case 'pdf':
-                    mimeType = 'application/pdf';
-                    fileContent = `FileZila Conversion Simulation: This file's content is NOT a real PDF.`;
-                    break;
-                case 'jpg':
-                case 'png':
-                    mimeType = `image/${selectedFormat.toLowerCase()}`;
-                    fileContent = `FileZila Conversion Simulation: This file's content is NOT a real image.`;
-                    break;
-                case 'pptx':
-                    mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-                    fileContent = `FileZila Conversion Simulation: This file's content is NOT a real PowerPoint.`;
-                    break;
-                case 'excel':
-                    mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-                    fileContent = `FileZila Conversion Simulation: This file's content is NOT a real Excel spreadsheet.`;
-                    break;
-                case 'svg':
-                    mimeType = 'image/svg+xml';
-                    fileContent = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"><rect width="200" height="100" fill="#3b82f6"/><text x="10" y="50" fill="white" font-size="20">SIMULATED SVG</text></svg>`;
-                    break;
-                default:
-                    mimeType = 'text/plain';
-                    fileContent = `FileZila Conversion Simulation: File content placeholder.`;
-            }
-            
-            // For text/XML formats, we use a string. For real binary formats, this would fail, but for simulation it allows download.
-            const blob = new Blob([fileContent], { type: mimeType });
-            const downloadUrl = URL.createObjectURL(blob);
-            
+            // The downloadUrl now comes from the checkStatus endpoint
             downloadLink.href = downloadUrl;
-            downloadLink.download = convertedFileName;
+            downloadLink.download = convertedFileName; // Uses the filename returned by the API
 
             progressSection.classList.add('hidden');
             successSection.classList.remove('hidden');
