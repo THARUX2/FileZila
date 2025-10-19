@@ -6,35 +6,16 @@
     <title>FileZila - The Ultimate File Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .drop-zone {
-            border: 2px dashed #3b82f6;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .drop-zone--over {
-            background-color: #3b82f620;
-        }
-        .drop-zone__input {
-            display: none;
-        }
-        .progress-bar-container {
-            width: 100%;
-            background-color: #e5e7eb;
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 1rem;
-            background-color: #3b82f6;
-            width: 0%;
-            transition: width 0.3s ease-in-out;
-            border-radius: 9999px;
-        }
+        .drop-zone { border: 2px dashed #3b82f6; transition: background-color 0.2s ease-in-out; }
+        .drop-zone--over { background-color: #3b82f620; }
+        .drop-zone__input { display: none; }
+        .progress-bar-container { width: 100%; background-color: #e5e7eb; border-radius: 9999px; overflow: hidden; }
+        .progress-bar { height: 1rem; background-color: #3b82f6; width: 0%; transition: width 0.3s ease-in-out; border-radius: 9999px; }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased">
 
     <div id="converter-page" class="min-h-screen">
-        <!-- Header -->
         <header class="bg-white dark:bg-gray-800 shadow-md">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -46,10 +27,8 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="py-8 sm:py-10">
             <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Uploader Section -->
                 <section id="uploader-section" class="text-center">
                     <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">Convert Your Files</h1>
                     <p class="mt-4 max-w-md mx-auto text-lg text-gray-500 dark:text-gray-400">Fast, secure, and easy-to-use on any device.</p>
@@ -63,35 +42,24 @@
                     </div>
                      <div id="file-details-section" class="hidden mt-6 text-left max-w-md mx-auto">
                         <p id="file-name" class="text-gray-600 dark:text-gray-300"></p>
-                        <label for="format-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">Convert to:</label>
-                        <select id="format-select" name="format" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                            <option>pptx</option>
-                            <option>excel</option>
-                            <option>jpg</option>
-                            <option>svg</option>
-                            <option>pdf</option>
-                        </select>
                         <button id="start-conversion-button" class="mt-6 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Start Conversion</button>
                     </div>
                     <p id="error-message" class="mt-4 text-red-500"></p>
                 </section>
 
-                <!-- Progress Section -->
                 <section id="progress-section" class="hidden text-center">
-                    <h2 id="progress-title" class="text-3xl font-bold text-gray-900 dark:text-white">Uploading...</h2>
-                    <p id="progress-subtitle" class="mt-2 text-gray-500 dark:text-gray-400">Your file is being securely uploaded.</p>
+                    <h2 id="progress-title" class="text-3xl font-bold text-gray-900 dark:text-white">Processing...</h2>
+                    <p id="progress-subtitle" class="mt-2 text-gray-500 dark:text-gray-400">Your file is being converted.</p>
                     <div class="mt-8">
                         <div class="progress-bar-container"><div id="progress-bar" class="progress-bar"></div></div>
                         <p id="progress-text" class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">0%</p>
                     </div>
                 </section>
 
-                <!-- Success Section -->
                 <section id="success-section" class="hidden text-center">
                      <h2 class="text-3xl font-bold text-green-500">Conversion Successful!</h2>
-                     <p class="mt-2 text-gray-500 dark:text-gray-400">Your file has been converted and is ready for download.</p>
+                     <p class="mt-2 text-gray-500 dark:text-gray-400">Your file has been converted.</p>
                      <div class="mt-8 flex flex-col sm:flex-row sm:justify-center items-center gap-4">
-                         <a id="download-link" href="#" download="converted-file" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Download File</a>
                          <button id="convert-another-button" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">Convert Another File</button>
                      </div>
                 </section>
@@ -101,10 +69,8 @@
 
     <script>
         // --- CONFIGURATION ---
-        // 1. ENDPOINT FOR GETTING THE SIGNED UPLOAD URL (Step 1)
-        const GET_UPLOAD_URL_API_ENDPOINT = 'https://get-upload-url-439192440179.europe-west1.run.app';
-        // 2. ENDPOINT FOR CHECKING THE CONVERSION STATUS (Step 3 Polling)
-        const CHECK_STATUS_API_ENDPOINT = 'https://filezila-check-status-439192440179.europe-west1.run.app';
+        // NEW: Endpoint for the conversion worker (the one you just deployed)
+        const CONVERSION_WORKER_ENDPOINT = 'https://conversion-worker-439192440179.europe-west1.run.app';
 
         // --- DOM Elements ---
         const dropZone = document.getElementById('drop-zone');
@@ -124,7 +90,6 @@
         const startConversionButton = document.getElementById('start-conversion-button');
 
         let selectedFile = null;
-        const POLLING_INTERVAL = 2000; // Check status every 2 seconds
 
         // --- Event Listeners ---
         dropZone.addEventListener('click', () => fileUpload.click());
@@ -141,7 +106,7 @@
         fileUpload.addEventListener('change', e => { if (e.target.files.length) handleFileSelect(e.target.files[0]); });
         startConversionButton.addEventListener('click', () => {
              if (selectedFile) {
-                uploadFile(selectedFile);
+                startConversionProcess(selectedFile);
              }
         });
         convertAnotherButton.addEventListener('click', resetUI);
@@ -156,101 +121,56 @@
             fileDetailsSection.classList.remove('hidden');
         }
 
-        async function uploadFile(file) {
-            if (GET_UPLOAD_URL_API_ENDPOINT.includes('PASTE_YOUR')) {
-                showError('Error: Backend API endpoint is not configured.');
-                return;
-            }
+        async function startConversionProcess(file) {
+            // Show the progress bar section
+            fileDetailsSection.classList.add('hidden');
+            uploaderSection.classList.add('hidden');
+            progressSection.classList.remove('hidden');
+            updateProgressUI(0, 'Preparing file...');
             
-            try {
-                // 1. Get a secure signed/presigned URL from our backend
-                updateProgressUI(0, 'Preparing upload...');
-                fileDetailsSection.classList.add('hidden');
-                progressSection.classList.remove('hidden');
-
-                const response = await fetch(GET_UPLOAD_URL_API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fileName: file.name, contentType: file.type }),
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('SERVER RESPONSE FAILED:', response.status, response.statusText, errorText);
-                    let errorDetail = `Status ${response.status} (${response.statusText}).`;
-                    throw new Error(`Could not get upload URL. ${errorDetail}`);
-                }
-                const { url } = await response.json();
-
-                // 2. Upload the file directly to Cloud Storage using the secure URL
-                updateProgressUI(25, 'Uploading file...');
-                const uploadResponse = await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': file.type },
-                    body: file,
-                });
-
-                if (!uploadResponse.ok) {
-                    const errorText = await uploadResponse.text();
-                    console.error('GCS PUT UPLOAD FAILED:', uploadResponse.status, errorText);
-                    throw new Error(`Direct file upload failed (Status ${uploadResponse.status}). Check permissions/CORS.`);
-                }
-                
-                // 3. Start Polling for Conversion Status
-                updateProgressUI(50, 'File uploaded. Starting conversion process...');
-                startPolling(file.name);
-
-            } catch (error) {
-                console.error('Upload process failed:', error);
-                showError(`Upload failed: ${error.message}`);
-                resetUI();
-            }
-        }
-        
-        // --- NEW POLLING LOGIC ---
-        function startPolling(originalName) {
-            const selectedFormat = document.getElementById('format-select').value;
-            const poll = setInterval(async () => {
-                
-                updateProgressUI(75, 'Waiting for conversion to complete...');
-
+            // Step 1: Read the file as Base64 data
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
                 try {
-                    // CALLS YOUR LIVE STATUS CHECKER SERVICE
-                    const response = await fetch(CHECK_STATUS_API_ENDPOINT, {
+                    // The result includes a prefix like "data:video/mp4;base64," which we must remove.
+                    const base64Data = reader.result.split(',')[1];
+                    updateProgressUI(75, 'Uploading and converting...');
+                    
+                    // Step 2: Send the file to the conversion worker
+                    const response = await fetch(CONVERSION_WORKER_ENDPOINT, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ originalName, targetFormat: selectedFormat }),
+                        body: JSON.stringify({
+                            fileData: base64Data,
+                            fileName: file.name
+                        }),
                     });
-                    
+
                     if (!response.ok) {
-                        clearInterval(poll);
-                        throw new Error(`Status check failed: ${response.status} ${response.statusText}`);
+                        const errorText = await response.text();
+                        throw new Error(`Server error: ${errorText}`);
                     }
 
                     const result = await response.json();
                     
-                    if (result.status === 'complete') {
-                        // Conversion is done! Stop polling.
-                        clearInterval(poll);
-                        updateProgressUI(100, 'Complete!');
-                        // Pass the real download link to showSuccess
-                        showSuccess(result.downloadUrl, result.convertedFileName); 
-                    } else if (result.status === 'processing') {
-                         // Keep waiting
-                         updateProgressUI(75, 'Conversion in progress...');
-                    } else if (result.status === 'error') {
-                        clearInterval(poll);
-                        throw new Error(`Conversion error: ${result.message}`);
-                    }
+                    // Step 3: Show success
+                    console.log('Success:', result.message);
+                    updateProgressUI(100, 'Complete!');
+                    showSuccess();
+
                 } catch (error) {
-                    clearInterval(poll);
-                    console.error('Polling failed:', error);
+                    console.error('Conversion process failed:', error);
                     showError(`Conversion failed: ${error.message}`);
                     resetUI();
                 }
-            }, POLLING_INTERVAL);
+            };
+            reader.onerror = (error) => {
+                console.error('Error reading file:', error);
+                showError('Could not read the selected file.');
+                resetUI();
+            };
         }
-
 
         function updateProgressUI(percentage, text) {
             progressBar.style.width = `${percentage}%`;
@@ -258,19 +178,14 @@
             progressSubtitle.textContent = text;
         }
 
-        // --- FINALIZED SHOW SUCCESS (Uses real URL) ---
-        function showSuccess(downloadUrl, convertedFileName) {
-            
-            // The downloadUrl now comes from the checkStatus endpoint
-            downloadLink.href = downloadUrl;
-            downloadLink.download = convertedFileName; // Uses the filename returned by the API
-
+        function showSuccess() {
             progressSection.classList.add('hidden');
             successSection.classList.remove('hidden');
         }
 
         function showError(message) {
             errorMessage.textContent = message;
+            uploaderSection.classList.remove('hidden'); // Show uploader again
             dropZone.classList.remove('hidden');
             fileDetailsSection.classList.add('hidden');
             progressSection.classList.add('hidden');
@@ -279,6 +194,7 @@
 
         function resetUI() {
             successSection.classList.add('hidden');
+            uploaderSection.classList.remove('hidden');
             dropZone.classList.remove('hidden');
             selectedFile = null;
             fileUpload.value = '';
@@ -290,3 +206,4 @@
 </body>
 </html>
       
+
