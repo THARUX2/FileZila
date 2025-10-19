@@ -215,6 +215,7 @@
                 updateProgressUI(75, 'Waiting for conversion to complete...');
 
                 try {
+                    // CALLS YOUR LIVE STATUS CHECKER SERVICE
                     const response = await fetch(CHECK_STATUS_API_ENDPOINT, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -229,10 +230,13 @@
                     const result = await response.json();
                     
                     if (result.status === 'complete') {
+                        // Conversion is done! Stop polling.
                         clearInterval(poll);
                         updateProgressUI(100, 'Complete!');
-                        showSuccess(result.downloadUrl, result.convertedFileName);
+                        // Pass the real download link to showSuccess
+                        showSuccess(result.downloadUrl, result.convertedFileName); 
                     } else if (result.status === 'processing') {
+                         // Keep waiting
                          updateProgressUI(75, 'Conversion in progress...');
                     } else if (result.status === 'error') {
                         clearInterval(poll);
@@ -285,3 +289,4 @@
     </script>
 </body>
 </html>
+      
