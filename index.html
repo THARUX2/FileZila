@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
@@ -101,8 +101,9 @@
 
     <script>
         // --- CONFIGURATION ---
-        // IMPORTANT: Paste your Cloud Function Trigger URL here!
-        const GET_UPLOAD_URL_API_ENDPOINT = 'https://upload-file-439192440179.europe-west1.run.app';
+        // CRITICAL FIX: Changed URL to point to the correct 'get-upload-url' service,
+        // which has the correct entry point and permissions.
+        const GET_UPLOAD_URL_API_ENDPOINT = 'https://get-upload-url-439192440179.europe-west1.run.app';
         // Note: The download URL will be handled differently in a full backend implementation.
         // For now, we are simulating this part.
         const CONVERTED_BUCKET_PUBLIC_URL = 'https://storage.googleapis.com/YOUR_CONVERTED_BUCKET_NAME';
@@ -176,8 +177,25 @@
                 });
 
                 if (!response.ok) {
+                    // --- ENHANCED ERROR REPORTING ---
                     const errorText = await response.text();
-                    throw new Error(`Could not get an upload URL from the API. Server says: ${errorText}`);
+                    const status = response.status;
+                    const statusText = response.statusText;
+                    console.error('SERVER RESPONSE FAILED:', status, statusText, errorText);
+                    
+                    // Show specific error messages to the user
+                    let errorDetail = `Status ${status} (${statusText}).`;
+                    if (status === 404) {
+                        errorDetail = 'API Not Found. Check service name in URL.';
+                    } else if (status === 405) {
+                        errorDetail = 'Method Not Allowed (Only POST is accepted).';
+                    } else if (errorText.includes('Not Found')) {
+                        errorDetail = 'Error: The server URL is incorrect.';
+                    } else if (errorText.length > 0) {
+                        errorDetail = `Server responded: ${errorText.substring(0, 80)}...`;
+                    }
+                    
+                    throw new Error(`Could not get upload URL. ${errorDetail}`);
                 }
                 const { url } = await response.json();
 
@@ -185,11 +203,25 @@
                 updateProgressUI(25, 'Uploading...');
                 const uploadResponse = await fetch(url, {
                     method: 'PUT',
+                    // CRITICAL: The signed URL requires the Content-Type header to exactly match
                     headers: { 'Content-Type': file.type },
                     body: file,
                 });
 
-                if (!uploadResponse.ok) throw new Error('Direct file upload failed.');
+                if (!uploadResponse.ok) {
+                    // --- ENHANCED GCS ERROR REPORTING ---
+                    const errorText = await uploadResponse.text();
+                    const status = uploadResponse.status;
+                    console.error('GCS PUT UPLOAD FAILED:', status, errorText);
+                    
+                    let errorDetail = `Upload failed with Status ${status}.`;
+                    if (status === 403) {
+                         errorDetail = "403 Forbidden. Check GCS CORS (cors.json) and Service Account permissions.";
+                    } else if (errorText.includes('SignatureDoesNotMatch')) {
+                        errorDetail = "Signature Mismatch. Check Content-Type header and IAM permissions (Token Creator).";
+                    }
+                    throw new Error(`Direct file upload failed. ${errorDetail}`);
+                }
                 
                 // 3. The conversion function would be triggered automatically on the backend.
                 // We will simulate this process.
