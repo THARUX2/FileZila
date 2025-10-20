@@ -113,7 +113,8 @@
                     maxFiles: 1,
                     onUploadDone: (result) => {
                         const file = result.filesUploaded[0];
-                        if (file.mimetype && file.mimetype.startsWith('image/')) {
+                        // Moderation check is now determined by the config
+                        if (file.mimetype && file.mimetype.startsWith('image/') && !config.useEditor) {
                             checkForUnsafeContent(file, config.targetFormat);
                         } else {
                             performConversion(file, config.targetFormat);
@@ -122,7 +123,6 @@
                 };
                 
                 // Safely add the transformations property ONLY if the editor is needed.
-                // This replaces the old 'editor' property which caused the error.
                 if (config.useEditor) {
                     pickerOptions.transformations = {
                         crop: true,
