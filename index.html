@@ -49,12 +49,12 @@
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Turn XLSX and XLS spreadsheets into a PDF document.</p>
                         </div>
                         <div id="image-to-pdf" class="card-touch bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
-                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 dark:text-purple-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg></div>
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 dark:text-purple-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg></div>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Image to PDF</h3>
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Edit, crop, and convert images into a single PDF file.</p>
                         </div>
                         <div id="image-to-text" class="card-touch bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
-                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600 dark:text-gray-300"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></div>
+                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600 dark:text-gray-300"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></div>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Image to Text (OCR)</h3>
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Extract text from any image or scanned document.</p>
                         </div>
@@ -84,122 +84,119 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const client = filestack.init('ACL47Xn7TUCQVIpNWjTqgz');
+        // ✅ --- FIX: Wait for the entire page to load before running the script ---
+        document.addEventListener('DOMContentLoaded', function() {
 
-        // --- DOM Elements ---
-        const uploaderSection = document.getElementById('uploader-section');
-        const progressSection = document.getElementById('progress-section');
-        const successSection = document.getElementById('success-section');
-        const errorMessage = document.getElementById('error-message');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
-        const progressSubtitle = document.getElementById('progress-subtitle');
-        const downloadLink = document.getElementById('download-link');
-        const convertAnotherButton = document.getElementById('convert-another-button');
+            // --- CONFIGURATION ---
+            const client = filestack.init('ACL47Xn7TUCQVIpNWjTqgz');
 
-        // --- Event Listeners for Cards ---
-        document.getElementById('word-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.doc', '.docx'] }));
-        document.getElementById('ppt-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.ppt', '.pptx'] }));
-        document.getElementById('excel-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.xls', '.xlsx'] }));
-        document.getElementById('image-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['image/*'], useEditor: true }));
-        document.getElementById('image-to-text').addEventListener('click', () => initiateConversion({ targetFormat: 'txt', acceptedFiles: ['image/*'] }));
-        convertAnotherButton.addEventListener('click', resetUI);
+            // --- DOM Elements ---
+            const uploaderSection = document.getElementById('uploader-section');
+            const progressSection = document.getElementById('progress-section');
+            const successSection = document.getElementById('success-section');
+            const errorMessage = document.getElementById('error-message');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const progressSubtitle = document.getElementById('progress-subtitle');
+            const downloadLink = document.getElementById('download-link');
+            const convertAnotherButton = document.getElementById('convert-another-button');
 
-        // --- Core Logic ---
-        function initiateConversion(config) {
-            const pickerOptions = {
-                fromSources: ['local_file_system', 'url', 'googledrive', 'dropbox'],
-                accept: config.acceptedFiles,
-                maxFiles: 1,
-                // ⭐ NEW: Enable the editor if requested by the config
-                editor: config.useEditor ? { crop: true, rotate: true, circle: false } : undefined,
-                onUploadDone: (result) => {
-                    const file = result.filesUploaded[0];
-                    // ⭐ NEW: Check images for safety before processing
-                    if (file.mimetype && file.mimetype.startsWith('image/')) {
-                        checkForUnsafeContent(file, config.targetFormat);
-                    } else {
-                        performConversion(file, config.targetFormat);
-                    }
-                },
-            };
-            client.picker(pickerOptions).open();
-        }
-        
-        // ⭐ NEW: Function for automatic content moderation
-        async function checkForUnsafeContent(file, targetFormat) {
-            updateUIForProcessing('Analyzing for safety...');
-            try {
-                const moderationResult = await client.transform(file.handle, { nsfw: true });
-                if (moderationResult && moderationResult.nsfw === true) {
-                    showError('This image could not be processed due to our content policy.');
-                    resetUI();
-                } else {
-                    // If safe, proceed with conversion
-                    performConversion(file, targetFormat);
-                }
-            } catch (error) {
-                console.error('Moderation check failed:', error);
-                showError('Could not analyze the file. Please try again.');
-                resetUI();
+            // --- Event Listeners for Cards ---
+            document.getElementById('word-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.doc', '.docx'] }));
+            document.getElementById('ppt-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.ppt', '.pptx'] }));
+            document.getElementById('excel-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.xls', '.xlsx'] }));
+            document.getElementById('image-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['image/*'], useEditor: true }));
+            document.getElementById('image-to-text').addEventListener('click', () => initiateConversion({ targetFormat: 'txt', acceptedFiles: ['image/*'] }));
+            convertAnotherButton.addEventListener('click', resetUI);
+
+            // --- Core Logic ---
+            function initiateConversion(config) {
+                const pickerOptions = {
+                    fromSources: ['local_file_system', 'url', 'googledrive', 'dropbox'],
+                    accept: config.acceptedFiles,
+                    maxFiles: 1,
+                    editor: config.useEditor ? { crop: true, rotate: true, circle: false } : undefined,
+                    onUploadDone: (result) => {
+                        const file = result.filesUploaded[0];
+                        if (file.mimetype && file.mimetype.startsWith('image/')) {
+                            checkForUnsafeContent(file, config.targetFormat);
+                        } else {
+                            performConversion(file, config.targetFormat);
+                        }
+                    },
+                };
+                client.picker(pickerOptions).open();
             }
-        }
-
-        async function performConversion(file, targetFormat) {
-            const originalFileName = file.filename;
-            const newFileName = `${originalFileName.split('.').slice(0, -1).join('.')}.${targetFormat}`;
-
-            updateUIForProcessing('Converting your file...');
             
-            try {
-                // For OCR, the task is different
-                const task = targetFormat === 'txt' ? 'ocr' : `output=format:${targetFormat}`;
-                
-                const transformedUrl = await client.transform(file.handle, { [targetFormat === 'txt' ? 'ocr' : 'output']: { format: targetFormat } });
-
-                updateProgressUI(100, 'Complete!');
-                showSuccess(transformedUrl, newFileName);
-
-            } catch (error) {
-                console.error('Conversion failed:', error);
-                showError('Sorry, the conversion failed. Please try another file.');
-                resetUI();
+            async function checkForUnsafeContent(file, targetFormat) {
+                updateUIForProcessing('Analyzing for safety...');
+                try {
+                    const moderationResult = await client.transform(file.handle, { nsfw: true });
+                    if (moderationResult && moderationResult.nsfw === true) {
+                        showError('This image could not be processed due to our content policy.');
+                        resetUI();
+                    } else {
+                        performConversion(file, targetFormat);
+                    }
+                } catch (error) {
+                    console.error('Moderation check failed:', error);
+                    showError('Could not analyze the file. Please try again.');
+                    resetUI();
+                }
             }
-        }
 
-        function updateUIForProcessing(subtitle) {
-            uploaderSection.classList.add('hidden');
-            progressSection.classList.remove('hidden');
-            progressSubtitle.textContent = subtitle;
-            progressBar.style.width = '50%';
-            progressText.textContent = '50%';
-        }
+            async function performConversion(file, targetFormat) {
+                const originalFileName = file.filename;
+                const newFileName = `${originalFileName.split('.').slice(0, -1).join('.')}.${targetFormat}`;
+                updateUIForProcessing('Converting your file...');
+                
+                try {
+                    const task = targetFormat === 'txt' ? 'ocr' : `output=format:${targetFormat}`;
+                    const transformedUrl = await client.transform(file.handle, { [targetFormat === 'txt' ? 'ocr' : 'output']: { format: targetFormat } });
 
-        function updateProgressUI(percentage, text) {
-            progressBar.style.width = `${percentage}%`;
-            progressText.textContent = `${percentage}%`;
-            progressSubtitle.textContent = text;
-        }
+                    updateProgressUI(100, 'Complete!');
+                    showSuccess(transformedUrl, newFileName);
 
-        function showSuccess(url, fileName) {
-            downloadLink.href = url;
-            downloadLink.download = fileName;
-            progressSection.classList.add('hidden');
-            successSection.classList.remove('hidden');
-        }
+                } catch (error) {
+                    console.error('Conversion failed:', error);
+                    showError('Sorry, the conversion failed. Please try another file.');
+                    resetUI();
+                }
+            }
 
-        function showError(message) {
-            errorMessage.textContent = message;
-        }
+            function updateUIForProcessing(subtitle) {
+                uploaderSection.classList.add('hidden');
+                progressSection.classList.remove('hidden');
+                progressSubtitle.textContent = subtitle;
+                progressBar.style.width = '50%';
+                progressText.textContent = '50%';
+            }
 
-        function resetUI() {
-            successSection.classList.add('hidden');
-            progressSection.classList.add('hidden');
-            uploaderSection.classList.remove('hidden');
-            errorMessage.textContent = '';
-            updateProgressUI(0, '');
-        }
+            function updateProgressUI(percentage, text) {
+                progressBar.style.width = `${percentage}%`;
+                progressText.textContent = `${percentage}%`;
+                progressSubtitle.textContent = text;
+            }
+
+            function showSuccess(url, fileName) {
+                downloadLink.href = url;
+                downloadLink.download = fileName;
+                progressSection.classList.add('hidden');
+                successSection.classList.remove('hidden');
+            }
+
+            function showError(message) {
+                errorMessage.textContent = message;
+            }
+
+            function resetUI() {
+                successSection.classList.add('hidden');
+                progressSection.classList.add('hidden');
+                uploaderSection.classList.remove('hidden');
+                errorMessage.textContent = '';
+                updateProgressUI(0, '');
+            }
+        }); // --- END OF FIX ---
     </script>
 </body>
 </html>
