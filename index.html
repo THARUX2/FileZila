@@ -19,8 +19,10 @@
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
-                        <span class="ml-2 text-xl font-bold text-gray-900 dark:text-white">FileZila</span>
+                        <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 dark:bg-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600 dark:text-blue-300"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900 dark:text-white">FileZila</span>
                     </div>
                 </div>
             </div>
@@ -49,12 +51,12 @@
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Turn XLSX and XLS spreadsheets into a PDF document.</p>
                         </div>
                         <div id="image-to-pdf" class="card-touch bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
-                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 dark:text-purple-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg></div>
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 dark:text-purple-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg></div>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Image to PDF</h3>
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Edit, crop, and convert images into a single PDF file.</p>
                         </div>
                         <div id="image-to-text" class="card-touch bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
-                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600 dark:text-gray-300"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></div>
+                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600 dark:text-gray-300"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg></div>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Image to Text (OCR)</h3>
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Extract text from any image or scanned document.</p>
                         </div>
@@ -84,13 +86,9 @@
     </div>
 
     <script>
-        // ✅ --- FIX: Wait for the entire page to load before running the script ---
         document.addEventListener('DOMContentLoaded', function() {
 
-            // --- CONFIGURATION ---
             const client = filestack.init('ACL47Xn7TUCQVIpNWjTqgz');
-
-            // --- DOM Elements ---
             const uploaderSection = document.getElementById('uploader-section');
             const progressSection = document.getElementById('progress-section');
             const successSection = document.getElementById('success-section');
@@ -101,7 +99,6 @@
             const downloadLink = document.getElementById('download-link');
             const convertAnotherButton = document.getElementById('convert-another-button');
 
-            // --- Event Listeners for Cards ---
             document.getElementById('word-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.doc', '.docx'] }));
             document.getElementById('ppt-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.ppt', '.pptx'] }));
             document.getElementById('excel-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.xls', '.xlsx'] }));
@@ -109,13 +106,13 @@
             document.getElementById('image-to-text').addEventListener('click', () => initiateConversion({ targetFormat: 'txt', acceptedFiles: ['image/*'] }));
             convertAnotherButton.addEventListener('click', resetUI);
 
-            // --- Core Logic ---
+            // ✅ --- FIXED CORE LOGIC ---
             function initiateConversion(config) {
+                // Start with the base options
                 const pickerOptions = {
                     fromSources: ['local_file_system', 'url', 'googledrive', 'dropbox'],
                     accept: config.acceptedFiles,
                     maxFiles: 1,
-                    editor: config.useEditor ? { crop: true, rotate: true, circle: false } : undefined,
                     onUploadDone: (result) => {
                         const file = result.filesUploaded[0];
                         if (file.mimetype && file.mimetype.startsWith('image/')) {
@@ -125,6 +122,12 @@
                         }
                     },
                 };
+                
+                // Safely add the editor property ONLY if it's needed
+                if (config.useEditor) {
+                    pickerOptions.editor = { crop: true, rotate: true, circle: false };
+                }
+
                 client.picker(pickerOptions).open();
             }
             
@@ -151,8 +154,8 @@
                 updateUIForProcessing('Converting your file...');
                 
                 try {
-                    const task = targetFormat === 'txt' ? 'ocr' : `output=format:${targetFormat}`;
-                    const transformedUrl = await client.transform(file.handle, { [targetFormat === 'txt' ? 'ocr' : 'output']: { format: targetFormat } });
+                    const task = targetFormat === 'txt' ? { ocr: {} } : { output: { format: targetFormat } };
+                    const transformedUrl = await client.transform(file.handle, task);
 
                     updateProgressUI(100, 'Complete!');
                     showSuccess(transformedUrl, newFileName);
@@ -196,7 +199,7 @@
                 errorMessage.textContent = '';
                 updateProgressUI(0, '');
             }
-        }); // --- END OF FIX ---
+        });
     </script>
 </body>
 </html>
