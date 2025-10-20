@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FileZila - The Ultimate File Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="//static.filestackapi.com/filestack-js/3.x.x/filestack.min.js"></script>
     <style>
-        .drop-zone { border: 2px dashed #3b82f6; transition: background-color 0.2s ease-in-out; }
-        .drop-zone--over { background-color: #3b82f620; }
-        .drop-zone__input { display: none; }
         .progress-bar-container { width: 100%; background-color: #e5e7eb; border-radius: 9999px; overflow: hidden; }
         .progress-bar { height: 1rem; background-color: #3b82f6; width: 0%; transition: width 0.3s ease-in-out; border-radius: 9999px; }
     </style>
@@ -27,39 +25,59 @@
             </div>
         </header>
 
-        <main class="py-8 sm:py-10">
-            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <main class="py-10">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <section id="uploader-section" class="text-center">
-                    <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">Convert Your Files</h1>
-                    <p class="mt-4 max-w-md mx-auto text-lg text-gray-500 dark:text-gray-400">Fast, secure, and easy-to-use on any device.</p>
-                    <div id="drop-zone" class="mt-8 drop-zone bg-white dark:bg-gray-800/50 rounded-lg cursor-pointer p-8 sm:p-12 md:p-16">
-                        <input type="file" id="file-upload" class="drop-zone__input">
-                        <span class="drop-zone__prompt">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                            <span class="mt-2 block font-semibold text-gray-900 dark:text-gray-100">Drag & drop or tap to upload</span>
-                            <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400">Supports JPG, PNG, PDF, and more</span>
-                        </span>
+                    <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl">Convert Your Files</h1>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-400">Select a conversion type below to get started.</p>
+
+                    <div class="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div id="pdf-to-word" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900">
+                                <span class="font-bold text-blue-600 dark:text-blue-300 text-xl">W</span>
+                            </div>
+                            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">PDF to Word</h3>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Convert your PDF files into editable DOCX documents.</p>
+                        </div>
+                        <div id="pdf-to-ppt" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900">
+                                <span class="font-bold text-orange-600 dark:text-orange-300 text-xl">P</span>
+                            </div>
+                            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">PDF to PowerPoint</h3>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Turn PDF pages into easy-to-edit PPTX slides.</p>
+                        </div>
+                        <div id="pdf-to-excel" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900">
+                                <span class="font-bold text-green-600 dark:text-green-300 text-xl">X</span>
+                            </div>
+                            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">PDF to Excel</h3>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Pull data and tables from PDFs into XLSX spreadsheets.</p>
+                        </div>
+                        <div id="word-to-pdf" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
+                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900">
+                                <span class="font-bold text-red-600 dark:text-red-300 text-sm">PDF</span>
+                            </div>
+                            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Word to PDF</h3>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Make DOC and DOCX files easy to read and share.</p>
+                        </div>
                     </div>
-                     <div id="file-details-section" class="hidden mt-6 text-left max-w-md mx-auto">
-                        <p id="file-name" class="text-gray-600 dark:text-gray-300"></p>
-                        <button id="start-conversion-button" class="mt-6 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Start Conversion</button>
-                    </div>
-                    <p id="error-message" class="mt-4 text-red-500"></p>
+                    <p id="error-message" class="mt-6 text-red-500"></p>
                 </section>
 
-                <section id="progress-section" class="hidden text-center">
+                <section id="progress-section" class="hidden text-center mt-10">
                     <h2 id="progress-title" class="text-3xl font-bold text-gray-900 dark:text-white">Processing...</h2>
                     <p id="progress-subtitle" class="mt-2 text-gray-500 dark:text-gray-400">Your file is being converted.</p>
-                    <div class="mt-8">
+                    <div class="mt-8 max-w-md mx-auto">
                         <div class="progress-bar-container"><div id="progress-bar" class="progress-bar"></div></div>
                         <p id="progress-text" class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">0%</p>
                     </div>
                 </section>
 
-                <section id="success-section" class="hidden text-center">
+                <section id="success-section" class="hidden text-center mt-10">
                      <h2 class="text-3xl font-bold text-green-500">Conversion Successful!</h2>
-                     <p class="mt-2 text-gray-500 dark:text-gray-400">Your file has been converted.</p>
+                     <p class="mt-2 text-gray-500 dark:text-gray-400">Your file is ready for download.</p>
                      <div class="mt-8 flex flex-col sm:flex-row sm:justify-center items-center gap-4">
+                         <a id="download-link" href="#" download="converted-file" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Download File</a>
                          <button id="convert-another-button" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">Convert Another File</button>
                      </div>
                 </section>
@@ -69,136 +87,88 @@
 
     <script>
         // --- CONFIGURATION ---
-        // NEW: Endpoint for the conversion worker (the one you just deployed)
-        const CONVERSION_WORKER_ENDPOINT = 'https://conversion-worker-439192440179.europe-west1.run.app';
+        const client = filestack.init('ACL47Xn7TUCQVIpNWjTqgz'); // Your API Key
 
         // --- DOM Elements ---
-        const dropZone = document.getElementById('drop-zone');
-        const fileUpload = document.getElementById('file-upload');
-        const fileNameDisplay = document.getElementById('file-name');
-        const errorMessage = document.getElementById('error-message');
         const uploaderSection = document.getElementById('uploader-section');
         const progressSection = document.getElementById('progress-section');
         const successSection = document.getElementById('success-section');
+        const errorMessage = document.getElementById('error-message');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
-        const progressTitle = document.getElementById('progress-title');
-        const progressSubtitle = document.getElementById('progress-subtitle');
         const downloadLink = document.getElementById('download-link');
         const convertAnotherButton = document.getElementById('convert-another-button');
-        const fileDetailsSection = document.getElementById('file-details-section');
-        const startConversionButton = document.getElementById('start-conversion-button');
 
-        let selectedFile = null;
-
-        // --- Event Listeners ---
-        dropZone.addEventListener('click', () => fileUpload.click());
-        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drop-zone--over'); });
-        ['dragleave', 'dragend'].forEach(type => { dropZone.addEventListener(type, () => dropZone.classList.remove('drop-zone--over')); });
-        dropZone.addEventListener('drop', e => {
-            e.preventDefault();
-            if (e.dataTransfer.files.length) {
-                fileUpload.files = e.dataTransfer.files;
-                handleFileSelect(fileUpload.files[0]);
-            }
-            dropZone.classList.remove('drop-zone--over');
-        });
-        fileUpload.addEventListener('change', e => { if (e.target.files.length) handleFileSelect(e.target.files[0]); });
-        startConversionButton.addEventListener('click', () => {
-             if (selectedFile) {
-                startConversionProcess(selectedFile);
-             }
-        });
+        // --- Event Listeners for Cards ---
+        document.getElementById('pdf-to-word').addEventListener('click', () => initiateConversion({ targetFormat: 'docx', acceptedFiles: ['.pdf'] }));
+        document.getElementById('pdf-to-ppt').addEventListener('click', () => initiateConversion({ targetFormat: 'pptx', acceptedFiles: ['.pdf'] }));
+        document.getElementById('pdf-to-excel').addEventListener('click', () => initiateConversion({ targetFormat: 'xlsx', acceptedFiles: ['.pdf'] }));
+        document.getElementById('word-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.doc', '.docx'] }));
         convertAnotherButton.addEventListener('click', resetUI);
 
         // --- Core Logic ---
-        function handleFileSelect(file) {
-            if (!file) return;
-            selectedFile = file;
-            fileNameDisplay.textContent = `Selected file: ${file.name}`;
-            errorMessage.textContent = '';
-            dropZone.classList.add('hidden');
-            fileDetailsSection.classList.remove('hidden');
+        function initiateConversion(conversionConfig) {
+            const pickerOptions = {
+                fromSources: ['local_file_system', 'url', 'googledrive', 'dropbox'],
+                accept: conversionConfig.acceptedFiles, // Only accept the correct file types
+                maxFiles: 1,
+                onUploadDone: (result) => {
+                    const file = result.filesUploaded[0];
+                    // Pass the file handle and target format to the conversion function
+                    performConversion(file, conversionConfig.targetFormat);
+                },
+            };
+            client.picker(pickerOptions).open();
         }
 
-        async function startConversionProcess(file) {
-            // Show the progress bar section
-            fileDetailsSection.classList.add('hidden');
+        async function performConversion(file, targetFormat) {
+            const originalFileName = file.filename;
+            const newFileName = `${originalFileName.split('.').slice(0, -1).join('.')}.${targetFormat}`;
+
+            // Show progress and hide the uploader cards
             uploaderSection.classList.add('hidden');
             progressSection.classList.remove('hidden');
-            updateProgressUI(0, 'Preparing file...');
-            
-            // Step 1: Read the file as Base64 data
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = async () => {
-                try {
-                    // The result includes a prefix like "data:video/mp4;base64," which we must remove.
-                    const base64Data = reader.result.split(',')[1];
-                    updateProgressUI(75, 'Uploading and converting...');
-                    
-                    // Step 2: Send the file to the conversion worker
-                    const response = await fetch(CONVERSION_WORKER_ENDPOINT, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            fileData: base64Data,
-                            fileName: file.name
-                        }),
-                    });
+            updateProgressUI(50, 'File uploaded. Starting conversion...');
 
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Server error: ${errorText}`);
-                    }
+            try {
+                const conversionOptions = {
+                    output: { format: targetFormat },
+                };
+                
+                // Use Filestack's transform function to get the converted file URL
+                const transformedUrl = await client.transform(file.handle, conversionOptions);
+                
+                updateProgressUI(100, 'Complete!');
+                showSuccess(transformedUrl, newFileName);
 
-                    const result = await response.json();
-                    
-                    // Step 3: Show success
-                    console.log('Success:', result.message);
-                    updateProgressUI(100, 'Complete!');
-                    showSuccess();
-
-                } catch (error) {
-                    console.error('Conversion process failed:', error);
-                    showError(`Conversion failed: ${error.message}`);
-                    resetUI();
-                }
-            };
-            reader.onerror = (error) => {
-                console.error('Error reading file:', error);
-                showError('Could not read the selected file.');
+            } catch (error) {
+                console.error('Conversion failed:', error);
+                showError('Sorry, the conversion failed. Please try another file.');
                 resetUI();
-            };
+            }
         }
 
         function updateProgressUI(percentage, text) {
             progressBar.style.width = `${percentage}%`;
             progressText.textContent = `${percentage}%`;
-            progressSubtitle.textContent = text;
+            document.getElementById('progress-subtitle').textContent = text;
         }
 
-        function showSuccess() {
+        function showSuccess(url, fileName) {
+            downloadLink.href = url;
+            downloadLink.download = fileName;
             progressSection.classList.add('hidden');
             successSection.classList.remove('hidden');
         }
 
         function showError(message) {
             errorMessage.textContent = message;
-            uploaderSection.classList.remove('hidden'); // Show uploader again
-            dropZone.classList.remove('hidden');
-            fileDetailsSection.classList.add('hidden');
-            progressSection.classList.add('hidden');
-            successSection.classList.add('hidden');
         }
 
         function resetUI() {
             successSection.classList.add('hidden');
+            progressSection.classList.add('hidden');
             uploaderSection.classList.remove('hidden');
-            dropZone.classList.remove('hidden');
-            selectedFile = null;
-            fileUpload.value = '';
-            fileNameDisplay.textContent = '';
             errorMessage.textContent = '';
             updateProgressUI(0, '');
         }
@@ -206,4 +176,5 @@
 </body>
 </html>
       
+
 
