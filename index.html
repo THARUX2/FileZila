@@ -56,7 +56,7 @@
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Edit, crop, and convert images into a single PDF file.</p>
                         </div>
                         <div id="image-to-text" class="card-touch bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
-                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600 dark:text-gray-300"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg></div>
+                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600 dark:text-gray-300"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg></div>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Image to Text (OCR)</h3>
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Extract text from any image or scanned document.</p>
                         </div>
@@ -112,8 +112,6 @@
                     accept: config.acceptedFiles,
                     maxFiles: 1,
                     onUploadDone: (result) => {
-                        // The onUploadDone callback now sends the file directly to the conversion function.
-                        // The conflicting moderation step has been removed to ensure stability.
                         performConversion(result.filesUploaded[0], config.targetFormat);
                     },
                 };
@@ -134,8 +132,9 @@
                 updateUIForProcessing('Converting your file...');
                 
                 try {
-                    // This creates the correct task object for the transform method.
-                    const task = targetFormat === 'txt' ? { ocr: {} } : { output: { format: targetFormat } };
+                    // This unified task object works for all conversions, including OCR.
+                    // Filestack intelligently applies OCR when the output format is 'txt'.
+                    const task = { output: { format: targetFormat } };
                     const transformedUrl = await client.transform(file.handle, task);
 
                     updateProgressUI(100, 'Complete!');
@@ -150,7 +149,7 @@
 
             function updateUIForProcessing(subtitle) {
                 uploaderSection.classList.add('hidden');
-                progressSection.classList.add('hidden');
+                progressSection.classList.remove('hidden');
                 progressSubtitle.textContent = subtitle;
                 progressBar.style.width = '50%';
                 progressText.textContent = '50%';
