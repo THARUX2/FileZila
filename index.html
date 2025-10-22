@@ -51,12 +51,12 @@
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Turn XLSX and XLS spreadsheets into a PDF document.</p>
                         </div>
                         <div id="image-to-pdf" class="card-touch bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
-                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 dark:text-purple-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg></div>
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 dark:text-purple-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg></div>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Image to PDF</h3>
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Edit, crop, and convert images into a single PDF file.</p>
                         </div>
                         <div id="image-to-text" class="card-touch bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
-                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600 dark:text-gray-300"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg></div>
+                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600 dark:text-gray-300"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg></div>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Image to Text (OCR)</h3>
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Extract text from any image or scanned document.</p>
                         </div>
@@ -102,9 +102,10 @@
             document.getElementById('ppt-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.ppt', '.pptx'] }));
             document.getElementById('excel-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['.xls', '.xlsx'] }));
             document.getElementById('image-to-pdf').addEventListener('click', () => initiateConversion({ targetFormat: 'pdf', acceptedFiles: ['image/*'], useEditor: true }));
-            document.getElementById('image-to-text').addEventListener('click', () => initiateConversion({ targetFormat: 'txt', acceptedFiles: ['image/*'] }));
+            document.getElementById('image-to-text').addEventListener('click', () => initiateConversion({ targetFormat: 'txt', acceptedFiles: ['image/*'], useModeration: true }));
             convertAnotherButton.addEventListener('click', resetUI);
 
+            // ✅ --- FIXED CORE LOGIC ---
             function initiateConversion(config) {
                 const pickerOptions = {
                     fromSources: ['local_file_system', 'url', 'googledrive', 'dropbox'],
@@ -112,7 +113,7 @@
                     maxFiles: 1,
                     onUploadDone: (result) => {
                         const file = result.filesUploaded[0];
-                        if (file.mimetype && file.mimetype.startsWith('image/') && !config.useEditor) {
+                        if (config.useModeration) {
                             checkForUnsafeContent(file, config.targetFormat);
                         } else {
                             performConversion(file, config.targetFormat);
