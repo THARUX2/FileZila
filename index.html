@@ -20,7 +20,7 @@
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center">
                         <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 dark:bg-gray-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600 dark:text-blue-300"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600 dark:text-blue-300"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
                         </div>
                         <span class="ml-3 text-xl font-bold text-gray-900 dark:text-white">FileZila</span>
                     </div>
@@ -51,7 +51,7 @@
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Turn XLSX and XLS spreadsheets into a PDF document.</p>
                         </div>
                         <div id="image-to-pdf" class="card-touch bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-xl transition-shadow">
-                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 dark:text-purple-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg></div>
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600 dark:text-purple-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg></div>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Image to PDF</h3>
                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Edit, crop, and convert images into a single PDF file.</p>
                         </div>
@@ -112,13 +112,9 @@
                     accept: config.acceptedFiles,
                     maxFiles: 1,
                     onUploadDone: (result) => {
-                        const file = result.filesUploaded[0];
-                        // MODIFICATION: Only run content moderation if specified, and NOT if the editor is used.
-                        if (config.useModeration && !config.useEditor) {
-                            checkForUnsafeContent(file, config.targetFormat);
-                        } else {
-                            performConversion(file, config.targetFormat);
-                        }
+                        // The onUploadDone callback now sends the file directly to the conversion function.
+                        // The conflicting moderation step has been removed to ensure stability.
+                        performConversion(result.filesUploaded[0], config.targetFormat);
                     },
                 };
                 
@@ -130,23 +126,6 @@
                 }
 
                 client.picker(pickerOptions).open();
-            }
-            
-            async function checkForUnsafeContent(file, targetFormat) {
-                updateUIForProcessing('Analyzing for safety...');
-                try {
-                    const moderationResult = await client.transform(file.handle, { nsfw: true });
-                    if (moderationResult && moderationResult.nsfw === true) {
-                        showError('This image could not be processed due to our content policy.');
-                        resetUI();
-                    } else {
-                        performConversion(file, targetFormat);
-                    }
-                } catch (error) {
-                    console.error('Moderation check failed:', error);
-                    showError('Could not analyze the file. Please try again.');
-                    resetUI();
-                }
             }
 
             async function performConversion(file, targetFormat) {
