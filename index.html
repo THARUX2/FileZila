@@ -132,15 +132,28 @@
                 updateUIForProcessing('Converting your file...');
                 
                 try {
-                    // This unified task object works for all conversions, including OCR.
-                    // Filestack intelligently applies OCR when the output format is 'txt'.
-                    const task = { output: { format: targetFormat } };
-                    const transformedUrl = await client.transform(file.handle, task);
+                    // This is the new, robust logic for handling all conversions.
+                    if (targetFormat === 'txt') {
+                        // Use the dedicated OCR task to get text data
+                        const ocrResult = await client.transform(file.handle, { ocr: {} });
+                        const extractedText = ocrResult.text || 'No text found in the image.';
+                        
+                        // Create a downloadable text file in the browser
+                        const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        updateProgressUI(100, 'Complete!');
+                        showSuccess(url, newFileName);
+                    } else {
+                        // For all other conversions, use the standard method
+                        const task = { output: { format: targetFormat } };
+                        const transformedUrl = await client.transform(file.handle, task);
+                        updateProgressUI(100, 'Complete!');
+                        showSuccess(transformedUrl, newFileName);
+                    }
 
-                    updateProgressUI(100, 'Complete!');
-                    showSuccess(transformedUrl, newFileName);
-
-                } catch (error) {
+                } catch (error)
+                 {
                     console.error('Conversion failed:', error);
                     showError('Sorry, the conversion failed. Please try another file.');
                     resetUI();
