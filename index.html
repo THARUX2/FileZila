@@ -83,12 +83,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // ✅ --- CONFIGURATION ---
             const CLOUD_NAME = 'dheflv4k6';
             const UPLOAD_PRESET = 'filezila_uploads';
             const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
 
-            // --- DOM Elements ---
             const fileInput = document.getElementById('file-input');
             const uploaderSection = document.getElementById('uploader-section');
             const progressSection = document.getElementById('progress-section');
@@ -100,13 +98,11 @@
             const downloadLink = document.getElementById('download-link');
             const convertAnotherButton = document.getElementById('convert-another-button');
 
-            // --- Event Listeners for Cards ---
             document.getElementById('word-to-pdf').addEventListener('click', () => openFilePicker('.doc,.docx,.rtf'));
             document.getElementById('ppt-to-pdf').addEventListener('click', () => openFilePicker('.ppt,.pptx'));
             document.getElementById('excel-to-pdf').addEventListener('click', () => openFilePicker('.xls,.xlsx'));
             document.getElementById('image-to-pdf').addEventListener('click', () => openFilePicker('image/*'));
             
-            // --- File Input Listener ---
             fileInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file) {
@@ -116,12 +112,12 @@
             
             convertAnotherButton.addEventListener('click', resetUI);
 
-            // --- Core Logic ---
             function openFilePicker(acceptedFormats) {
                 fileInput.accept = acceptedFormats;
                 fileInput.click();
             }
 
+            // ✅ --- FIXED CORE LOGIC ---
             async function uploadAndConvertFile(file) {
                 updateUIForProcessing('Uploading your file...');
 
@@ -136,16 +132,19 @@
                     });
 
                     if (!response.ok) {
-                        throw new Error('Upload failed. Please try again.');
+                        const errorData = await response.json();
+                        throw new Error(errorData.error.message || 'Upload failed. Please try again.');
                     }
 
                     const data = await response.json();
                     
                     updateUIForProcessing('Converting your file...');
                     
-                    // This is the Cloudinary on-the-fly transformation magic
-                    const originalUrl = data.secure_url;
-                    const convertedUrl = originalUrl.substring(0, originalUrl.lastIndexOf('.')) + '.pdf';
+                    // This is the new, robust method for building the conversion URL.
+                    // It uses the public_id and the correct /image/upload/ delivery type.
+                    const publicId = data.public_id;
+                    const resourceType = data.resource_type === 'raw' ? 'image' : data.resource_type;
+                    const convertedUrl = `https://res.cloudinary.com/${CLOUD_NAME}/${resourceType}/upload/${publicId}.pdf`;
                     const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.pdf';
 
                     updateProgressUI(100, 'Complete!');
@@ -154,7 +153,7 @@
                 } catch (error) {
                     console.error('Process failed:', error);
                     showError(error.message);
-                    resetUI();
+                    resetUI(); // Go back to the main screen on failure
                 }
             }
 
@@ -164,7 +163,7 @@
                 successSection.classList.add('hidden');
                 errorMessage.textContent = '';
                 progressSubtitle.textContent = subtitle;
-                updateProgressUI(50, '50%'); // Show immediate progress
+                updateProgressUI(50, '50%');
             }
 
             function updateProgressUI(percentage, text) {
@@ -188,7 +187,7 @@
                 progressSection.classList.add('hidden');
                 uploaderSection.classList.remove('hidden');
                 errorMessage.textContent = '';
-                fileInput.value = ''; // Clear the file input
+                fileInput.value = '';
                 updateProgressUI(0, '0%');
             }
         });
