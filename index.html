@@ -141,10 +141,12 @@
                     updateUIForProcessing('Converting your file...');
                     
                     // This is the new, robust method for building the conversion URL.
-                    // It uses the public_id and the correct /image/upload/ delivery type.
-                    const publicId = data.public_id;
+                    // It correctly replaces the original extension with ".pdf".
+                    const publicIdWithExt = data.public_id;
+                    const basePublicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
+                    
                     const resourceType = data.resource_type === 'raw' ? 'image' : data.resource_type;
-                    const convertedUrl = `https://res.cloudinary.com/${CLOUD_NAME}/${resourceType}/upload/${publicId}.pdf`;
+                    const convertedUrl = `https://res.cloudinary.com/${CLOUD_NAME}/${resourceType}/upload/${basePublicId}.pdf`;
                     const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.pdf';
 
                     updateProgressUI(100, 'Complete!');
@@ -153,7 +155,7 @@
                 } catch (error) {
                     console.error('Process failed:', error);
                     showError(error.message);
-                    resetUI(); // Go back to the main screen on failure
+                    resetUI();
                 }
             }
 
