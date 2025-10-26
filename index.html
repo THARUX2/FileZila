@@ -124,6 +124,8 @@
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('upload_preset', UPLOAD_PRESET);
+                // This is the new, robust method for requesting a PDF conversion during upload.
+                formData.append('transformation', 'f_pdf');
 
                 try {
                     const response = await fetch(UPLOAD_URL, {
@@ -138,14 +140,11 @@
 
                     const data = await response.json();
                     
-                    updateUIForProcessing('Converting your file...');
+                    updateUIForProcessing('Finalizing your file...');
                     
-                    // This is the new, robust method for building the conversion URL.
-                    // It uses the public_id directly as returned by the API, without modification.
-                    const publicId = data.public_id;
-                    const resourceType = data.resource_type === 'raw' ? 'image' : data.resource_type;
-                    
-                    const convertedUrl = `https://res.cloudinary.com/${CLOUD_NAME}/${resourceType}/upload/${publicId}.pdf`;
+                    // The API response now contains the correct URL for the converted PDF.
+                    // We use it directly without any modification.
+                    const convertedUrl = data.secure_url;
                     const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.pdf';
 
                     updateProgressUI(100, 'Complete!');
@@ -195,4 +194,3 @@
     </script>
 </body>
 </html>
-       
